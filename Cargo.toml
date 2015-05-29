@@ -1,0 +1,8 @@
+[package]
+name = "color_quant"
+license = "MIT"
+version = "1.0"
+authors = ["nwin <nwin@users.noreply.github.com>"]
+readme = "README.md"
+repository = "https://github.com/PistonDevelopers/color_quant.git"
+
