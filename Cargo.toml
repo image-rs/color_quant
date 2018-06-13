@@ -1,9 +1,8 @@
 [package]
 name = "color_quant"
 license = "MIT"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["nwin <nwin@users.noreply.github.com>"]
 readme = "README.md"
 description = "Color quantization library to reduce n colors to 256 colors."
 repository = "https://github.com/PistonDevelopers/color_quant.git"
-
