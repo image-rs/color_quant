@@ -1,5 +1,5 @@
 # Color quantization library
-This library provides a color quantizer based on the [NEUQUANT](http://members.ozemail.com.au/~dekker/NEUQUANT.HTML)
+This library provides a color quantizer based on the [NEUQUANT](https://scientificgems.wordpress.com/stuff/neuquant-fast-high-quality-image-quantization/)
 quantization algorithm by Anthony Dekker.
 
 ### Usage
