@@ -188,6 +188,13 @@ impl NeuQuant {
         self.search_netindex(b, g, r, a)
     }
 
+    /// Lookup pixel values for color at `idx` in the colormap.
+    pub fn lookup(&self, idx: usize) -> Option<[u8; 4]> {
+        self.colormap
+            .get(idx)
+            .map(|p| [p.r as u8, p.g as u8, p.b as u8, p.a as u8])
+    }
+
     /// Returns the RGBA color map calculated from the sample.
     pub fn color_map_rgba(&self) -> Vec<u8> {
         let mut map = Vec::with_capacity(self.netsize * 4);
