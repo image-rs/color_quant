@@ -396,10 +396,7 @@ impl NeuQuant {
             q = self.colormap[smallpos];
             // swap p (i) and q (smallpos) entries
             if i != smallpos {
-                let mut j;
-                j = q;
-                q = p;
-                p = j;
+                ::std::mem::swap(&mut p, &mut q);
                 self.colormap[i] = p;
                 self.colormap[smallpos] = q;
             }
