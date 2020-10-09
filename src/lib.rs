@@ -219,7 +219,7 @@ impl NeuQuant {
     }
 
     /// Move neuron i towards biased (a,b,g,r) by factor alpha
-    fn altersingle(&mut self, alpha: f64, i: i32, quad: Quad<f64>) {
+    fn salter_single(&mut self, alpha: f64, i: i32, quad: Quad<f64>) {
         let n = &mut self.network[i as usize];
         n.b -= alpha * (n.b - quad.b);
         n.g -= alpha * (n.g - quad.g);
@@ -228,7 +228,7 @@ impl NeuQuant {
     }
 
     /// Move neuron adjacent neurons towards biased (a,b,g,r) by factor alpha
-    fn alterneigh(&mut self, alpha: f64, rad: i32, i: i32, quad: Quad<f64>) {
+    fn alter_neighbour(&mut self, alpha: f64, rad: i32, i: i32, quad: Quad<f64>) {
         let lo = max(i - rad, 0);
         let hi = min(i + rad, self.netsize as i32);
         let mut j = i + 1;
@@ -342,7 +342,7 @@ impl NeuQuant {
             let j = self.contest(b, g, r, a);
 
             let alpha_ = (1.0 * alpha as f64) / INIT_ALPHA as f64;
-            self.altersingle(
+            self.salter_single(
                 alpha_,
                 j,
                 Quad {
@@ -353,7 +353,7 @@ impl NeuQuant {
                 },
             );
             if rad > 0 {
-                self.alterneigh(
+                self.alter_neighbour(
                     alpha_,
                     rad,
                     j,
