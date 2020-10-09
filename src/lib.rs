@@ -49,10 +49,19 @@ copies from any such party to do so, with the only requirement being
 that this copyright notice remain intact.
 
 */
+
 //! # Color quantization library
+//!
 //! This library provides a color quantizer based on the [NEUQUANT](http://members.ozemail.com.au/~dekker/NEUQUANT.HTML)
-//! quantization algorithm by Anthony Dekker.
-//! ### Usage
+//!
+//! Original literature: Dekker, A. H. (1994). Kohonen neural networks for
+//! optimal colour quantization. *Network: Computation in Neural Systems*, 5(3), 351-367.
+//! [doi: 10.1088/0954-898X_5_3_003](https://doi.org/10.1088/0954-898X_5_3_003)
+//!
+//! See also <https://scientificgems.wordpress.com/stuff/neuquant-fast-high-quality-image-quantization/>
+//!
+//! ## Usage
+//!
 //! ```
 //! let data = vec![0; 40];
 //! let nq = color_quant::NeuQuant::new(10, 256, &data);
@@ -91,7 +100,6 @@ struct Quad<T> {
 type Neuron = Quad<f64>;
 type Color = Quad<i32>;
 
-/// Neural network based color quantizer.
 pub struct NeuQuant {
     network: Vec<Neuron>,
     colormap: Vec<Color>,
@@ -155,22 +163,19 @@ impl NeuQuant {
         }
         self.learn(pixels);
         self.build_colormap();
-        self.inxbuild();
+        self.build_netindex();
     }
 
     /// Maps the rgba-pixel in-place to the best-matching color in the color map.
     #[inline(always)]
     pub fn map_pixel(&self, pixel: &mut [u8]) {
         assert!(pixel.len() == 4);
-        match (pixel[0], pixel[1], pixel[2], pixel[3]) {
-            (r, g, b, a) => {
-                let i = self.inxsearch(b, g, r, a);
-                pixel[0] = self.colormap[i].r as u8;
-                pixel[1] = self.colormap[i].g as u8;
-                pixel[2] = self.colormap[i].b as u8;
-                pixel[3] = self.colormap[i].a as u8;
-            }
-        }
+        let (r, g, b, a) = (pixel[0], pixel[1], pixel[2], pixel[3]);
+        let i = self.search_netindex(b, g, r, a);
+        pixel[0] = self.colormap[i].r as u8;
+        pixel[1] = self.colormap[i].g as u8;
+        pixel[2] = self.colormap[i].b as u8;
+        pixel[3] = self.colormap[i].a as u8;
     }
 
     /// Finds the best-matching index in the color map.
@@ -179,9 +184,15 @@ impl NeuQuant {
     #[inline(always)]
     pub fn index_of(&self, pixel: &[u8]) -> usize {
         assert!(pixel.len() == 4);
-        match (pixel[0], pixel[1], pixel[2], pixel[3]) {
-            (r, g, b, a) => self.inxsearch(b, g, r, a),
-        }
+        let (r, g, b, a) = (pixel[0], pixel[1], pixel[2], pixel[3]);
+        self.search_netindex(b, g, r, a)
+    }
+
+    /// Lookup pixel values for color at `idx` in the colormap.
+    pub fn lookup(&self, idx: usize) -> Option<[u8; 4]> {
+        self.colormap
+            .get(idx)
+            .map(|p| [p.r as u8, p.g as u8, p.b as u8, p.a as u8])
     }
 
     /// Returns the RGBA color map calculated from the sample.
@@ -208,7 +219,7 @@ impl NeuQuant {
     }
 
     /// Move neuron i towards biased (a,b,g,r) by factor alpha
-    fn altersingle(&mut self, alpha: f64, i: i32, quad: Quad<f64>) {
+    fn salter_single(&mut self, alpha: f64, i: i32, quad: Quad<f64>) {
         let n = &mut self.network[i as usize];
         n.b -= alpha * (n.b - quad.b);
         n.g -= alpha * (n.g - quad.g);
@@ -217,7 +228,7 @@ impl NeuQuant {
     }
 
     /// Move neuron adjacent neurons towards biased (a,b,g,r) by factor alpha
-    fn alterneigh(&mut self, alpha: f64, rad: i32, i: i32, quad: Quad<f64>) {
+    fn alter_neighbour(&mut self, alpha: f64, rad: i32, i: i32, quad: Quad<f64>) {
         let lo = max(i - rad, 0);
         let hi = min(i + rad, self.netsize as i32);
         let mut j = i + 1;
@@ -331,28 +342,9 @@ impl NeuQuant {
             let j = self.contest(b, g, r, a);
 
             let alpha_ = (1.0 * alpha as f64) / INIT_ALPHA as f64;
-            self.altersingle(
-                alpha_,
-                j,
-                Quad {
-                    b: b,
-                    g: g,
-                    r: r,
-                    a: a,
-                },
-            );
+            self.salter_single(alpha_, j, Quad { b, g, r, a });
             if rad > 0 {
-                self.alterneigh(
-                    alpha_,
-                    rad,
-                    j,
-                    Quad {
-                        b: b,
-                        g: g,
-                        r: r,
-                        a: a,
-                    },
-                )
+                self.alter_neighbour(alpha_, rad, j, Quad { b, g, r, a })
             };
 
             pos += step;
@@ -383,7 +375,7 @@ impl NeuQuant {
     }
 
     /// Insertion sort of network and building of netindex[0..255]
-    fn inxbuild(&mut self) {
+    fn build_netindex(&mut self) {
         let mut previouscol = 0;
         let mut startpos = 0;
 
@@ -404,10 +396,7 @@ impl NeuQuant {
             q = self.colormap[smallpos];
             // swap p (i) and q (smallpos) entries
             if i != smallpos {
-                let mut j;
-                j = q;
-                q = p;
-                p = j;
+                ::std::mem::swap(&mut p, &mut q);
                 self.colormap[i] = p;
                 self.colormap[smallpos] = q;
             }
@@ -429,7 +418,7 @@ impl NeuQuant {
     }
 
     /// Search for best matching color
-    fn inxsearch(&self, b: u8, g: u8, r: u8, a: u8) -> usize {
+    fn search_netindex(&self, b: u8, g: u8, r: u8, a: u8) -> usize {
         let mut bestd = 1 << 30; // ~ 1_000_000
         let mut best = 0;
         // start at netindex[g] and work outwards
