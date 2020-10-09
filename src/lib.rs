@@ -184,9 +184,8 @@ impl NeuQuant {
     #[inline(always)]
     pub fn index_of(&self, pixel: &[u8]) -> usize {
         assert!(pixel.len() == 4);
-        match (pixel[0], pixel[1], pixel[2], pixel[3]) {
-            (r, g, b, a) => self.search_netindex(b, g, r, a),
-        }
+        let (r, g, b, a) = (pixel[0], pixel[1], pixel[2], pixel[3]);
+        self.search_netindex(b, g, r, a)
     }
 
     /// Returns the RGBA color map calculated from the sample.
