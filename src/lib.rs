@@ -163,7 +163,7 @@ impl NeuQuant {
         }
         self.learn(pixels);
         self.build_colormap();
-        self.inxbuild();
+        self.build_netindex();
     }
 
     /// Maps the rgba-pixel in-place to the best-matching color in the color map.
@@ -375,7 +375,7 @@ impl NeuQuant {
     }
 
     /// Insertion sort of network and building of netindex[0..255]
-    fn inxbuild(&mut self) {
+    fn build_netindex(&mut self) {
         let mut previouscol = 0;
         let mut startpos = 0;
 
