@@ -342,28 +342,9 @@ impl NeuQuant {
             let j = self.contest(b, g, r, a);
 
             let alpha_ = (1.0 * alpha as f64) / INIT_ALPHA as f64;
-            self.salter_single(
-                alpha_,
-                j,
-                Quad {
-                    b: b,
-                    g: g,
-                    r: r,
-                    a: a,
-                },
-            );
+            self.salter_single(alpha_, j, Quad { b, g, r, a });
             if rad > 0 {
-                self.alter_neighbour(
-                    alpha_,
-                    rad,
-                    j,
-                    Quad {
-                        b: b,
-                        g: g,
-                        r: r,
-                        a: a,
-                    },
-                )
+                self.alter_neighbour(alpha_, rad, j, Quad { b, g, r, a })
             };
 
             pos += step;
