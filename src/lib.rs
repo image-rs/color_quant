@@ -100,7 +100,6 @@ struct Quad<T> {
 type Neuron = Quad<f64>;
 type Color = Quad<i32>;
 
-/// Neural network based color quantizer.
 pub struct NeuQuant {
     network: Vec<Neuron>,
     colormap: Vec<Color>,
@@ -173,7 +172,7 @@ impl NeuQuant {
         assert!(pixel.len() == 4);
         match (pixel[0], pixel[1], pixel[2], pixel[3]) {
             (r, g, b, a) => {
-                let i = self.inxsearch(b, g, r, a);
+                let i = self.search_netindex(b, g, r, a);
                 pixel[0] = self.colormap[i].r as u8;
                 pixel[1] = self.colormap[i].g as u8;
                 pixel[2] = self.colormap[i].b as u8;
@@ -189,7 +188,7 @@ impl NeuQuant {
     pub fn index_of(&self, pixel: &[u8]) -> usize {
         assert!(pixel.len() == 4);
         match (pixel[0], pixel[1], pixel[2], pixel[3]) {
-            (r, g, b, a) => self.inxsearch(b, g, r, a),
+            (r, g, b, a) => self.search_netindex(b, g, r, a),
         }
     }
 
@@ -438,7 +437,7 @@ impl NeuQuant {
     }
 
     /// Search for best matching color
-    fn inxsearch(&self, b: u8, g: u8, r: u8, a: u8) -> usize {
+    fn search_netindex(&self, b: u8, g: u8, r: u8, a: u8) -> usize {
         let mut bestd = 1 << 30; // ~ 1_000_000
         let mut best = 0;
         // start at netindex[g] and work outwards
