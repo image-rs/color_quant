@@ -27,7 +27,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
- 
+
 NeuQuant Neural-Net Quantization Algorithm
 ------------------------------------------
 
@@ -63,16 +63,13 @@ that this copyright notice remain intact.
 mod math;
 use crate::math::clamp;
 
-use std::cmp::{
-    max,
-    min
-};
+use std::cmp::{max, min};
 
 const CHANNELS: usize = 4;
 
 const RADIUS_DEC: i32 = 30; // factor of 1/30 each cycle
 
-const ALPHA_BIASSHIFT: i32 = 10;            // alpha starts at 1
+const ALPHA_BIASSHIFT: i32 = 10; // alpha starts at 1
 const INIT_ALPHA: i32 = 1 << ALPHA_BIASSHIFT; // biased by 10 bits
 
 const GAMMA: f64 = 1024.0;
@@ -108,9 +105,9 @@ pub struct NeuQuant {
 impl NeuQuant {
     /// Creates a new neuronal network and trains it with the supplied data.
     ///
-    /// Pixels are assumed to be in RGBA format. 
+    /// Pixels are assumed to be in RGBA format.
     /// `colors` should be $>=64$. `samplefac` determines the faction of
-    /// the sample that will be used to train the network. Its value must be in the 
+    /// the sample that will be used to train the network. Its value must be in the
     /// range $[1, 30]$. A value of $1$ thus produces the best result but is also
     /// slowest. $10$ is a good compromise between speed and quality.
     pub fn new(samplefac: i32, colors: usize, pixels: &[u8]) -> Self {
@@ -122,7 +119,7 @@ impl NeuQuant {
             bias: Vec::with_capacity(netsize),
             freq: Vec::with_capacity(netsize),
             samplefac: samplefac,
-            netsize: colors
+            netsize: colors,
         };
         this.init(pixels);
         this
@@ -141,8 +138,18 @@ impl NeuQuant {
             let tmp = (i as f64) * 256.0 / (self.netsize as f64);
             // Sets alpha values at 0 for dark pixels.
             let a = if i < 16 { i as f64 * 16.0 } else { 255.0 };
-            self.network.push(Neuron { r: tmp, g: tmp, b: tmp, a: a});
-            self.colormap.push(Color { r: 0, g: 0, b: 0, a: 255 });
+            self.network.push(Neuron {
+                r: tmp,
+                g: tmp,
+                b: tmp,
+                a: a,
+            });
+            self.colormap.push(Color {
+                r: 0,
+                g: 0,
+                b: 0,
+                a: 255,
+            });
             self.freq.push(freq);
             self.bias.push(0.0);
         }
@@ -173,13 +180,11 @@ impl NeuQuant {
     pub fn index_of(&self, pixel: &[u8]) -> usize {
         assert!(pixel.len() == 4);
         match (pixel[0], pixel[1], pixel[2], pixel[3]) {
-            (r, g, b, a) => {
-                self.inxsearch(b, g, r, a)
-            }
+            (r, g, b, a) => self.inxsearch(b, g, r, a),
         }
     }
-    
-    /// Returns the RGBA color map calculated from the sample. 
+
+    /// Returns the RGBA color map calculated from the sample.
     pub fn color_map_rgba(&self) -> Vec<u8> {
         let mut map = Vec::with_capacity(self.netsize * 4);
         for entry in &self.colormap {
@@ -190,8 +195,8 @@ impl NeuQuant {
         }
         map
     }
-    
-    /// Returns the RGBA color map calculated from the sample. 
+
+    /// Returns the RGBA color map calculated from the sample.
     pub fn color_map_rgb(&self) -> Vec<u8> {
         let mut map = Vec::with_capacity(self.netsize * 3);
         for entry in &self.colormap {
@@ -247,7 +252,7 @@ impl NeuQuant {
     /// finds best neuron (min dist-bias) and returns position
     /// for frequently chosen neurons, freq[i] is high and bias[i] is negative
     /// bias[i] = gamma*((1/self.netsize)-freq[i])
-    fn contest (&mut self, b: f64, g: f64, r: f64, a: f64) -> i32 {
+    fn contest(&mut self, b: f64, g: f64, r: f64, a: f64) -> i32 {
         use std::f64;
 
         let mut bestd = f64::MAX;
@@ -259,14 +264,20 @@ impl NeuQuant {
             let bestbiasd_biased = bestbiasd + self.bias[i];
             let mut dist;
             let n = &self.network[i];
-            dist  = (n.b - b).abs();
+            dist = (n.b - b).abs();
             dist += (n.r - r).abs();
             if dist < bestd || dist < bestbiasd_biased {
                 dist += (n.g - g).abs();
                 dist += (n.a - a).abs();
-                if dist < bestd {bestd=dist; bestpos=i as i32;}
-                let biasdist = dist - self.bias [i];
-                if biasdist < bestbiasd {bestbiasd=biasdist; bestbiaspos=i as i32;}
+                if dist < bestd {
+                    bestd = dist;
+                    bestpos = i as i32;
+                }
+                let biasdist = dist - self.bias[i];
+                if biasdist < bestbiasd {
+                    bestbiasd = biasdist;
+                    bestbiaspos = i as i32;
+                }
             }
             self.freq[i] -= BETA * self.freq[i];
             self.bias[i] += BETAGAMMA * self.freq[i];
@@ -280,24 +291,33 @@ impl NeuQuant {
     /// Note: the number of learning cycles is crucial and the parameters are not
     /// optimized for net sizes < 26 or > 256. 1064 colors seems to work fine
     fn learn(&mut self, pixels: &[u8]) {
-        let initrad: i32 = self.netsize as i32/8;   // for 256 cols, radius starts at 32
+        let initrad: i32 = self.netsize as i32 / 8; // for 256 cols, radius starts at 32
         let radiusbiasshift: i32 = 6;
         let radiusbias: i32 = 1 << radiusbiasshift;
-        let init_bias_radius: i32 = initrad*radiusbias;
+        let init_bias_radius: i32 = initrad * radiusbias;
         let mut bias_radius = init_bias_radius;
-        let alphadec = 30 + ((self.samplefac-1)/3);
+        let alphadec = 30 + ((self.samplefac - 1) / 3);
         let lengthcount = pixels.len() / CHANNELS;
         let samplepixels = lengthcount / self.samplefac as usize;
         // learning cycles
-        let n_cycles = match self.netsize >> 1 { n if n <= 100 => 100, n => n};
-        let delta = match samplepixels / n_cycles { 0 => 1, n => n };
+        let n_cycles = match self.netsize >> 1 {
+            n if n <= 100 => 100,
+            n => n,
+        };
+        let delta = match samplepixels / n_cycles {
+            0 => 1,
+            n => n,
+        };
         let mut alpha = INIT_ALPHA;
 
         let mut rad = bias_radius >> radiusbiasshift;
-        if rad <= 1 {rad = 0};
+        if rad <= 1 {
+            rad = 0
+        };
 
         let mut pos = 0;
-        let step = *PRIMES.iter()
+        let step = *PRIMES
+            .iter()
             .find(|&&prime| lengthcount % prime != 0)
             .unwrap_or(&PRIMES[3]);
 
@@ -308,23 +328,46 @@ impl NeuQuant {
                 (p[0] as f64, p[1] as f64, p[2] as f64, p[3] as f64)
             };
 
-            let j =  self.contest (b, g, r, a);
+            let j = self.contest(b, g, r, a);
 
             let alpha_ = (1.0 * alpha as f64) / INIT_ALPHA as f64;
-            self.altersingle(alpha_, j, Quad { b: b, g: g, r: r, a: a });
+            self.altersingle(
+                alpha_,
+                j,
+                Quad {
+                    b: b,
+                    g: g,
+                    r: r,
+                    a: a,
+                },
+            );
             if rad > 0 {
-                self.alterneigh(alpha_, rad, j, Quad { b: b, g: g, r: r, a: a })
+                self.alterneigh(
+                    alpha_,
+                    rad,
+                    j,
+                    Quad {
+                        b: b,
+                        g: g,
+                        r: r,
+                        a: a,
+                    },
+                )
             };
 
             pos += step;
-            while pos >= lengthcount { pos -= lengthcount };
+            while pos >= lengthcount {
+                pos -= lengthcount
+            }
 
             i += 1;
-            if i%delta == 0 {
+            if i % delta == 0 {
                 alpha -= alpha / alphadec;
                 bias_radius -= bias_radius / RADIUS_DEC;
                 rad = bias_radius >> radiusbiasshift;
-                if rad <= 1 {rad = 0};
+                if rad <= 1 {
+                    rad = 0
+                };
             }
         }
     }
@@ -348,26 +391,29 @@ impl NeuQuant {
             let mut p = self.colormap[i];
             let mut q;
             let mut smallpos = i;
-            let mut smallval = p.g as usize;            // index on g
-            // find smallest in i..netsize-1
+            let mut smallval = p.g as usize; // index on g
+                                             // find smallest in i..netsize-1
             for j in (i + 1)..self.netsize {
                 q = self.colormap[j];
-                if (q.g as usize) < smallval {      // index on g
+                if (q.g as usize) < smallval {
+                    // index on g
                     smallpos = j;
-                    smallval = q.g as usize;    // index on g
+                    smallval = q.g as usize; // index on g
                 }
             }
             q = self.colormap[smallpos];
             // swap p (i) and q (smallpos) entries
             if i != smallpos {
                 let mut j;
-                j = q;   q = p;   p = j;
+                j = q;
+                q = p;
+                p = j;
                 self.colormap[i] = p;
                 self.colormap[smallpos] = q;
             }
             // smallval entry is now in position i
             if smallval != previouscol {
-                self.netindex[previouscol] = (startpos + i)>>1;
+                self.netindex[previouscol] = (startpos + i) >> 1;
                 for j in (previouscol + 1)..smallval {
                     self.netindex[j] = i
                 }
@@ -376,8 +422,10 @@ impl NeuQuant {
             }
         }
         let max_netpos = self.netsize - 1;
-        self.netindex[previouscol] = (startpos + max_netpos)>>1;
-        for j in (previouscol + 1)..256 { self.netindex[j] = max_netpos }; // really 256
+        self.netindex[previouscol] = (startpos + max_netpos) >> 1;
+        for j in (previouscol + 1)..256 {
+            self.netindex[j] = max_netpos
+        } // really 256
     }
 
     /// Search for best matching color
@@ -388,22 +436,26 @@ impl NeuQuant {
         let mut i = self.netindex[g as usize];
         let mut j = if i > 0 { i - 1 } else { 0 };
 
-        while (i < self.netsize) || (j >  0) {
+        while (i < self.netsize) || (j > 0) {
             if i < self.netsize {
                 let p = self.colormap[i];
                 let mut e = p.g - g as i32;
-                let mut dist = e*e; // inx key
-                if dist >= bestd { break }
-                else {
+                let mut dist = e * e; // inx key
+                if dist >= bestd {
+                    break;
+                } else {
                     e = p.b - b as i32;
-                    dist += e*e;
+                    dist += e * e;
                     if dist < bestd {
                         e = p.r - r as i32;
-                        dist += e*e;
+                        dist += e * e;
                         if dist < bestd {
                             e = p.a - a as i32;
-                            dist += e*e;
-                            if dist < bestd { bestd = dist; best = i;}
+                            dist += e * e;
+                            if dist < bestd {
+                                bestd = dist;
+                                best = i;
+                            }
                         }
                     }
                     i += 1;
@@ -412,18 +464,22 @@ impl NeuQuant {
             if j > 0 {
                 let p = self.colormap[j];
                 let mut e = p.g - g as i32;
-                let mut dist = e*e; // inx key
-                if dist >= bestd { break }
-                else {
+                let mut dist = e * e; // inx key
+                if dist >= bestd {
+                    break;
+                } else {
                     e = p.b - b as i32;
-                    dist += e*e;
+                    dist += e * e;
                     if dist < bestd {
                         e = p.r - r as i32;
-                        dist += e*e;
+                        dist += e * e;
                         if dist < bestd {
                             e = p.a - a as i32;
-                            dist += e*e;
-                            if dist < bestd { bestd = dist; best = j; }
+                            dist += e * e;
+                            if dist < bestd {
+                                bestd = dist;
+                                best = j;
+                            }
                         }
                     }
                     j -= 1;
