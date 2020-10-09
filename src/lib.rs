@@ -59,19 +59,14 @@ that this copyright notice remain intact.
 //! let indixes: Vec<u8> = data.chunks(4).map(|pix| nq.index_of(pix) as u8).collect();
 //! let color_map = nq.color_map_rgba();
 //! ```
-//! 
+
+mod math;
+use crate::math::clamp;
+
 use std::cmp::{
     max,
     min
 };
-
-macro_rules! clamp(		
-    ($x:expr) => (match $x {		
-        x if x < 0 => 0,		
-        x if x > 255 => 255,		
-        x => x		
-    })		
-);
 
 const CHANNELS: usize = 4;
 
@@ -337,10 +332,10 @@ impl NeuQuant {
     /// initializes the color map
     fn build_colormap(&mut self) {
         for i in 0usize..self.netsize {
-            self.colormap[i].b = clamp!(self.network[i].b.round() as i32);
-            self.colormap[i].g = clamp!(self.network[i].g.round() as i32);
-            self.colormap[i].r = clamp!(self.network[i].r.round() as i32);
-            self.colormap[i].a = clamp!(self.network[i].a.round() as i32);
+            self.colormap[i].b = clamp(self.network[i].b.round() as i32);
+            self.colormap[i].g = clamp(self.network[i].g.round() as i32);
+            self.colormap[i].r = clamp(self.network[i].r.round() as i32);
+            self.colormap[i].a = clamp(self.network[i].a.round() as i32);
         }
     }
 
