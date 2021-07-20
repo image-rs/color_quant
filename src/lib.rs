@@ -87,7 +87,7 @@ const BETAGAMMA: f64 = BETA * GAMMA;
 
 // four primes near 500 - assume no image has a length so large
 // that it is divisible by all four primes
-const PRIMES: [usize; 4] = [499, 491, 478, 503];
+const PRIMES: [usize; 4] = [499, 491, 487, 503];
 
 #[derive(Clone, Copy)]
 struct Quad<T> {
