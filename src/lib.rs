@@ -416,65 +416,59 @@ impl NeuQuant {
             self.netindex[j] = max_netpos
         } // really 256
     }
-
     /// Search for best matching color
     fn search_netindex(&self, b: u8, g: u8, r: u8, a: u8) -> usize {
-        let mut bestd = 1 << 30; // ~ 1_000_000
-        let mut best = 0;
-        // start at netindex[g] and work outwards
-        let mut i = self.netindex[g as usize];
-        let mut j = if i > 0 { i - 1 } else { 0 };
+        let mut best_dist = std::i32::MAX;
+        let first_guess = self.netindex[g as usize];
+        let mut best_pos = first_guess;
+        let mut i = best_pos;
 
-        while (i < self.netsize) || (j > 0) {
-            if i < self.netsize {
-                let p = self.colormap[i];
-                let mut e = p.g - g as i32;
-                let mut dist = e * e; // inx key
-                if dist >= bestd {
-                    break;
-                } else {
-                    e = p.b - b as i32;
-                    dist += e * e;
-                    if dist < bestd {
-                        e = p.r - r as i32;
-                        dist += e * e;
-                        if dist < bestd {
-                            e = p.a - a as i32;
-                            dist += e * e;
-                            if dist < bestd {
-                                bestd = dist;
-                                best = i;
-                            }
-                        }
-                    }
-                    i += 1;
+        #[inline]
+        fn sqr_dist(a: i32, b: u8) -> i32 {
+            let dist = a - b as i32;
+            dist * dist
+        }
+
+        {
+            let mut cmp = |i| {
+                let Quad {
+                    r: pr,
+                    g: pg,
+                    b: pb,
+                    a: pa,
+                } = self.colormap[i];
+                let mut dist = sqr_dist(pg, g);
+                if dist > best_dist {
+                    return true;
                 }
+                dist += sqr_dist(pr, r);
+                if dist >= best_dist {
+                    return false;
+                }
+                dist += sqr_dist(pb, b);
+                if dist >= best_dist {
+                    return false;
+                }
+                dist += sqr_dist(pa, a);
+                if dist >= best_dist {
+                    return false;
+                }
+                best_dist = dist;
+                best_pos = i;
+                false
+            };
+            while i < self.netsize {
+                i = if cmp(i) { break } else { i + 1 };
             }
-            if j > 0 {
-                let p = self.colormap[j];
-                let mut e = p.g - g as i32;
-                let mut dist = e * e; // inx key
-                if dist >= bestd {
-                    break;
-                } else {
-                    e = p.b - b as i32;
-                    dist += e * e;
-                    if dist < bestd {
-                        e = p.r - r as i32;
-                        dist += e * e;
-                        if dist < bestd {
-                            e = p.a - a as i32;
-                            dist += e * e;
-                            if dist < bestd {
-                                bestd = dist;
-                                best = j;
-                            }
-                        }
-                    }
-                    j -= 1;
-                }
+            // this j < C is a cheat to avoid the bounds check, as when the loop reaches 0
+            // it will wrap to usize::MAX. Assume that self.netsize < usize::MAX, otherwise
+            // using a lot of memory.
+            let mut j = first_guess.wrapping_sub(1);
+            while j < self.netsize {
+                j = if cmp(j) { break } else { j.wrapping_sub(1) };
             }
         }
-        best
+
+        best_pos
     }
 }
