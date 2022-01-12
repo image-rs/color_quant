@@ -89,6 +89,21 @@ const BETAGAMMA: f64 = BETA * GAMMA;
 // that it is divisible by all four primes
 const PRIMES: [usize; 4] = [499, 491, 478, 503];
 
+pub enum ControlFlow {
+    Break,
+    Continue,
+}
+
+impl ControlFlow {
+    fn is_break(self) -> bool {
+        if let ControlFlow::Break = self {
+            true
+        } else {
+            false
+        }
+    }
+}
+
 #[derive(Clone, Copy)]
 struct Quad<T> {
     r: T,
@@ -439,33 +454,44 @@ impl NeuQuant {
                 } = self.colormap[i];
                 let mut dist = sqr_dist(pg, g);
                 if dist > best_dist {
-                    return true;
+                    // If the green is less than optimal, break.
+                    // Seems to be arbitrary choice from the original implementation,
+                    // but can't change this w/o invasive changes since
+                    // we also sort by green.
+                    return ControlFlow::Break;
                 }
+                // otherwise, continue searching through the colormap.
                 dist += sqr_dist(pr, r);
                 if dist >= best_dist {
-                    return false;
+                    return ControlFlow::Continue;
                 }
                 dist += sqr_dist(pb, b);
                 if dist >= best_dist {
-                    return false;
+                    return ControlFlow::Continue;
                 }
                 dist += sqr_dist(pa, a);
                 if dist >= best_dist {
-                    return false;
+                    return ControlFlow::Continue;
                 }
                 best_dist = dist;
                 best_pos = i;
-                false
+                ControlFlow::Continue
             };
             while i < self.netsize {
-                i = if cmp(i) { break } else { i + 1 };
+                i = if cmp(i).is_break() { break } else { i + 1 };
             }
             // this j < C is a cheat to avoid the bounds check, as when the loop reaches 0
             // it will wrap to usize::MAX. Assume that self.netsize < usize::MAX, otherwise
-            // using a lot of memory.
+            // using a lot of memory. This also must be true since netsize < isize::MAX <
+            // usize::MAX, otherwise it would fail while allocating a Vec since they can be at
+            // most isize::MAX elements.
             let mut j = first_guess.wrapping_sub(1);
             while j < self.netsize {
-                j = if cmp(j) { break } else { j.wrapping_sub(1) };
+                j = if cmp(j).is_break() {
+                    break;
+                } else {
+                    j.wrapping_sub(1)
+                };
             }
         }
 
