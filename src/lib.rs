@@ -75,6 +75,7 @@ that this copyright notice remain intact.
 #[macro_use]
 extern crate alloc;
 
+#[cfg(not(feature = "std"))]
 #[allow(unused_imports)]
 use num_traits::float::FloatCore;
 

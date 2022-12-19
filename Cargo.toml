@@ -9,4 +9,9 @@ description = "Color quantization library to reduce n colors to 256 colors."
 repository = "https://github.com/image-rs/color_quant.git"
 
 [dependencies]
-num-traits = { version = "0.2", default-features = false }
+num-traits = { version = "0.2", default-features = false, optional = true }
+
+[features]
+default = ["std"]
+std = []
+alloc = ["num-traits"]
