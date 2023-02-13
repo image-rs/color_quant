@@ -69,7 +69,6 @@ that this copyright notice remain intact.
 //! let color_map = nq.color_map_rgba();
 //! ```
 
-// #![no_std]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 #[macro_use]
