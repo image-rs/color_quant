@@ -46,5 +46,6 @@ jobs:
         toolchain: nightly
         override: true
     - name: build
-      run: >
-         cargo no-std-check --no-default-features --features=num-traits
+      run: |
+        cargo install cargo-no-std-check
+        cargo no-std-check --no-default-features --features=num-traits
