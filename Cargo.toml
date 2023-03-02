@@ -15,4 +15,4 @@ num-traits = { version = "0.2", default-features = false, optional = true }
 [features]
 default = ["std"]
 std = []
-alloc = ["num-traits"]
+num-traits = ["dep:num-traits"]
