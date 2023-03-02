@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         # alloc crate requires Rust 1.36
-        rust: ["1.36", stable, beta, nightly]
+        rust: ["1.56", stable, beta, nightly]
         features: ["default", "num-traits"]
     steps:
     - uses: actions/checkout@v2
@@ -19,7 +19,6 @@ jobs:
       run: >
         cargo build --no-default-features --features=${{ matrix.features }} --verbose
     - name: test
-      if: ${{ matrix.rust != '1.36' }}
       run: >
         cargo test --no-default-features --features=${{ matrix.features }} --tests --benches
       # TODO: add criterion benchmarks?
