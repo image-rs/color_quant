@@ -69,10 +69,20 @@ that this copyright notice remain intact.
 //! let color_map = nq.color_map_rgba();
 //! ```
 
+#![cfg_attr(not(feature = "std"), no_std)]
+
+#[macro_use]
+extern crate alloc;
+
+#[cfg(all(feature = "num-traits", not(feature = "std")))]
+#[allow(unused_imports)]
+use num_traits::float::FloatCore;
+
 mod math;
 use crate::math::clamp;
 
-use std::cmp::{max, min};
+use alloc::vec::Vec;
+use core::cmp::{max, min};
 
 const CHANNELS: usize = 4;
 
@@ -279,7 +289,7 @@ impl NeuQuant {
     /// for frequently chosen neurons, freq[i] is high and bias[i] is negative
     /// bias[i] = gamma*((1/self.netsize)-freq[i])
     fn contest(&mut self, b: f64, g: f64, r: f64, a: f64) -> i32 {
-        use std::f64;
+        use core::f64;
 
         let mut bestd = f64::MAX;
         let mut bestbiasd: f64 = bestd;
@@ -411,7 +421,7 @@ impl NeuQuant {
             q = self.colormap[smallpos];
             // swap p (i) and q (smallpos) entries
             if i != smallpos {
-                ::std::mem::swap(&mut p, &mut q);
+                ::core::mem::swap(&mut p, &mut q);
                 self.colormap[i] = p;
                 self.colormap[smallpos] = q;
             }
@@ -433,7 +443,7 @@ impl NeuQuant {
     }
     /// Search for best matching color
     fn search_netindex(&self, b: u8, g: u8, r: u8, a: u8) -> usize {
-        let mut best_dist = std::i32::MAX;
+        let mut best_dist = core::i32::MAX;
         let first_guess = self.netindex[g as usize];
         let mut best_pos = first_guess;
         let mut i = best_pos;
