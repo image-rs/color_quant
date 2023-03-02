@@ -9,3 +9,7 @@ quantization algorithm by Anthony Dekker.
     let indixes: Vec<u8> = data.chunks(4).map(|pix| nq.index_of(pix) as u8).collect();
     let color_map = nq.color_map_rgba();
 
+#### no_std
+
+You should be able to use this crate in `no_std` environment e.g.:
+`color_quant = { version = "1.1", default-features = false, features = ['num-traits'] }`
