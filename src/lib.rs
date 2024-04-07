@@ -69,6 +69,8 @@ that this copyright notice remain intact.
 //! let color_map = nq.color_map_rgba();
 //! ```
 
+#![forbid(unsafe_code)]
+
 mod math;
 use crate::math::clamp;
 
