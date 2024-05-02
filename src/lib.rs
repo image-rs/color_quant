@@ -235,6 +235,16 @@ impl NeuQuant {
         map
     }
 
+    /// Return the Alpha channel of the color map calculated from the sample.
+    /// It's useful for transparency used in the tRNS chunk of the PNG format.
+    pub fn color_map_alpha(&self) -> Vec<u8> {
+        let mut map = Vec::with_capacity(self.netsize);
+        for entry in &self.colormap {
+            map.push(entry.a as u8);
+        }
+        map
+    }
+
     /// Move neuron i towards biased (a,b,g,r) by factor alpha
     fn salter_single(&mut self, alpha: f64, i: i32, quad: Quad<f64>) {
         let n = &mut self.network[i as usize];
