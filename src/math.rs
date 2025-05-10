@@ -37,3 +37,16 @@ pub(crate) fn round(a: f64) -> f64 {
         a - f - one
     }
 }
+
+#[inline]
+pub(crate) fn abs(a: f64) -> f64 {
+    if a.is_sign_positive() {
+        return a;
+    }
+
+    if a.is_sign_negative() {
+        return -a;
+    }
+
+    core::f64::NAN
+}

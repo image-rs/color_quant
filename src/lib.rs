@@ -78,7 +78,7 @@ use alloc::{vec, vec::Vec};
 use core::cmp::{max, min};
 
 mod math;
-use crate::math::{clamp, round};
+use crate::math::{abs, clamp, round};
 
 const CHANNELS: usize = 4;
 
@@ -306,11 +306,11 @@ impl NeuQuant {
             let bestbiasd_biased = bestbiasd + self.bias[i];
             let mut dist;
             let n = &self.network[i];
-            dist = (n.b - b).abs();
-            dist += (n.r - r).abs();
+            dist = abs(n.b - b);
+            dist += abs(n.r - r);
             if dist < bestd || dist < bestbiasd_biased {
-                dist += (n.g - g).abs();
-                dist += (n.a - a).abs();
+                dist += abs(n.g - g);
+                dist += abs(n.a - a);
                 if dist < bestd {
                     bestd = dist;
                     bestpos = i as i32;
