@@ -8,3 +8,32 @@ pub(crate) fn clamp(a: i32) -> i32 {
         a
     }
 }
+
+#[inline]
+fn fract(a: f64) -> f64 {
+    if a == 0.0 {
+        0.
+    } else {
+        a % 1.
+    }
+}
+
+#[inline]
+pub(crate) fn round(a: f64) -> f64 {
+    let one = 1.0;
+    let h = 0.5;
+    let f = fract(a);
+    if f.is_nan() || f == 0.0 {
+        a
+    } else if a > 0. {
+        if f < h {
+            a - f
+        } else {
+            a - f + one
+        }
+    } else if -f < h {
+        a - f
+    } else {
+        a - f - one
+    }
+}
