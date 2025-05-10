@@ -70,12 +70,11 @@ that this copyright notice remain intact.
 //! ```
 
 #![forbid(unsafe_code)]
-
 #![no_std]
 
 extern crate alloc;
 
-use alloc::{vec::Vec, vec};
+use alloc::{vec, vec::Vec};
 use core::cmp::{max, min};
 
 mod math;
