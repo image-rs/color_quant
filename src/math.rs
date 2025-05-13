@@ -1,3 +1,10 @@
+//! These implementations are based on `num-traits`' [`FloatCore`].
+//! They have been adapted to the particular needs of `color_quant` and refined
+//! through [feedback].
+//!
+//! [`FloatCore`]: https://docs.rs/num-traits/0.2.19/num_traits/float/trait.FloatCore.html
+//! [feedback]: https://github.com/image-rs/color_quant/pull/24#discussion_r2083587462
+
 #[inline]
 pub(crate) fn abs(a: f64) -> f64 {
     if a.is_sign_positive() {
