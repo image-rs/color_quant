@@ -78,7 +78,7 @@ use alloc::{vec, vec::Vec};
 use core::cmp::{max, min};
 
 mod math;
-use crate::math::{abs, clamp, round};
+use crate::math::{abs, clamp_round};
 
 const CHANNELS: usize = 4;
 
@@ -398,10 +398,10 @@ impl NeuQuant {
     /// initializes the color map
     fn build_colormap(&mut self) {
         for i in 0usize..self.netsize {
-            self.colormap[i].b = clamp(round(self.network[i].b) as i32);
-            self.colormap[i].g = clamp(round(self.network[i].g) as i32);
-            self.colormap[i].r = clamp(round(self.network[i].r) as i32);
-            self.colormap[i].a = clamp(round(self.network[i].a) as i32);
+            self.colormap[i].b = clamp_round(self.network[i].b);
+            self.colormap[i].g = clamp_round(self.network[i].g);
+            self.colormap[i].r = clamp_round(self.network[i].r);
+            self.colormap[i].a = clamp_round(self.network[i].a);
         }
     }
 
