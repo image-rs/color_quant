@@ -70,11 +70,15 @@ that this copyright notice remain intact.
 //! ```
 
 #![forbid(unsafe_code)]
+#![no_std]
+
+extern crate alloc;
+
+use alloc::{vec, vec::Vec};
+use core::cmp::{max, min};
 
 mod math;
-use crate::math::clamp;
-
-use std::cmp::{max, min};
+use crate::math::{abs, clamp_round};
 
 const CHANNELS: usize = 4;
 
@@ -291,7 +295,7 @@ impl NeuQuant {
     /// for frequently chosen neurons, freq[i] is high and bias[i] is negative
     /// bias[i] = gamma*((1/self.netsize)-freq[i])
     fn contest(&mut self, b: f64, g: f64, r: f64, a: f64) -> i32 {
-        use std::f64;
+        use core::f64;
 
         let mut bestd = f64::MAX;
         let mut bestbiasd: f64 = bestd;
@@ -302,11 +306,11 @@ impl NeuQuant {
             let bestbiasd_biased = bestbiasd + self.bias[i];
             let mut dist;
             let n = &self.network[i];
-            dist = (n.b - b).abs();
-            dist += (n.r - r).abs();
+            dist = abs(n.b - b);
+            dist += abs(n.r - r);
             if dist < bestd || dist < bestbiasd_biased {
-                dist += (n.g - g).abs();
-                dist += (n.a - a).abs();
+                dist += abs(n.g - g);
+                dist += abs(n.a - a);
                 if dist < bestd {
                     bestd = dist;
                     bestpos = i as i32;
@@ -394,10 +398,10 @@ impl NeuQuant {
     /// initializes the color map
     fn build_colormap(&mut self) {
         for i in 0usize..self.netsize {
-            self.colormap[i].b = clamp(self.network[i].b.round() as i32);
-            self.colormap[i].g = clamp(self.network[i].g.round() as i32);
-            self.colormap[i].r = clamp(self.network[i].r.round() as i32);
-            self.colormap[i].a = clamp(self.network[i].a.round() as i32);
+            self.colormap[i].b = clamp_round(self.network[i].b);
+            self.colormap[i].g = clamp_round(self.network[i].g);
+            self.colormap[i].r = clamp_round(self.network[i].r);
+            self.colormap[i].a = clamp_round(self.network[i].a);
         }
     }
 
@@ -423,7 +427,7 @@ impl NeuQuant {
             q = self.colormap[smallpos];
             // swap p (i) and q (smallpos) entries
             if i != smallpos {
-                ::std::mem::swap(&mut p, &mut q);
+                ::core::mem::swap(&mut p, &mut q);
                 self.colormap[i] = p;
                 self.colormap[smallpos] = q;
             }
@@ -445,7 +449,7 @@ impl NeuQuant {
     }
     /// Search for best matching color
     fn search_netindex(&self, b: u8, g: u8, r: u8, a: u8) -> usize {
-        let mut best_dist = std::i32::MAX;
+        let mut best_dist = core::i32::MAX;
         let first_guess = self.netindex[g as usize];
         let mut best_pos = first_guess;
         let mut i = best_pos;
